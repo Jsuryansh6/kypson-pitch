@@ -1,0 +1,670 @@
+<!DOCTYPE html>
+<html>
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1,maximum-scale=1,user-scalable=no">
+<meta name="mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+<meta name="theme-color" content="#085041">
+<title>Kypson Pitch</title>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.18.5/xlsx.full.min.js"></script>
+<style>
+*{box-sizing:border-box;margin:0;padding:0;-webkit-tap-highlight-color:transparent}
+:root{--teal:#0F6E56;--dark:#085041;--mint:#5DCAA5;--light:#E1F5EE;--buyer:#1565C0;--buyer-light:#E3F0FF;--mfr:#6A1B9A;--mfr-light:#F3E5F5;--red:#EA4335;--bg:#F0EEE8;--card:#fff;--border:#D3D1C7;--txt:#2C2C2A;--sub:#6B6965;--wa:#25D366}
+body{font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',sans-serif;background:var(--bg);color:var(--txt);min-height:100vh;overscroll-behavior:none}
+
+/* TOP BAR */
+.topbar{background:var(--dark);padding:env(safe-area-inset-top,0) 0 0;position:sticky;top:0;z-index:200}
+.topbar-inner{display:flex;align-items:center;justify-content:space-between;padding:12px 16px}
+.logo{font-size:17px;font-weight:800;color:#fff;letter-spacing:2.5px}
+.logo-sub{font-size:9px;color:rgba(255,255,255,.45);letter-spacing:.5px;margin-top:1px}
+
+/* TABS */
+.tabs{display:grid;grid-template-columns:1fr 1fr 1fr;background:var(--dark);padding:0 16px 12px;gap:8px}
+.tab{border:none;border-radius:10px;padding:10px;font-size:12px;font-weight:600;cursor:pointer;display:flex;align-items:center;justify-content:center;gap:5px}
+.tab-active{background:var(--teal);color:#fff}
+.tab-inactive{background:rgba(255,255,255,.1);color:rgba(255,255,255,.6)}
+
+.main{max-width:480px;margin:0 auto;padding:16px 14px 80px}
+.pane{display:none}.pane.active{display:block}
+
+/* FIELDS */
+.field-wrap{background:var(--card);border-radius:12px;border:1px solid var(--border);padding:12px 14px;margin-bottom:10px;display:flex;align-items:center;gap:10px}
+.field-input{flex:1;border:none;font-size:14px;color:var(--txt);background:transparent;outline:none}
+.field-input::placeholder{color:#bbb}
+textarea.field-input{resize:none;min-height:36px}
+
+/* MODE TOGGLE */
+.mode-row{display:grid;grid-template-columns:1fr 1fr;gap:8px;margin-bottom:12px}
+.mode-btn{border:none;border-radius:10px;padding:11px;font-size:13px;font-weight:600;cursor:pointer;display:flex;align-items:center;justify-content:center;gap:6px;transition:.15s}
+.mode-active{background:var(--teal);color:#fff}
+.mode-inactive{background:#EAE8E1;color:var(--sub)}
+
+/* CAPTURE */
+.capture-wrap{border-radius:16px;overflow:hidden;background:var(--card);border:1.5px dashed var(--border);margin-bottom:10px;cursor:pointer}
+.capture-wrap.has-img{border-style:solid;border-color:var(--teal)}
+.capture-empty{padding:24px 20px;text-align:center}
+.cap-icon{width:48px;height:48px;background:var(--light);border-radius:12px;display:flex;align-items:center;justify-content:center;margin:0 auto 10px}
+.cap-title{font-size:15px;font-weight:600;margin-bottom:4px}
+.cap-sub{font-size:12px;color:var(--sub);line-height:1.5}
+.preview-img{width:100%;max-height:200px;object-fit:cover;display:block}
+.img-badge{position:absolute;bottom:10px;left:10px;background:rgba(8,80,65,.85);color:#fff;font-size:11px;font-weight:600;padding:4px 10px;border-radius:20px}
+
+/* BUTTONS */
+.btn-row{display:grid;grid-template-columns:1fr 1fr;gap:8px;margin-bottom:10px}
+.btn{border:none;border-radius:12px;padding:13px;font-size:13px;font-weight:600;cursor:pointer;display:flex;align-items:center;justify-content:center;gap:7px}
+.btn:active{transform:scale(.97)}
+.btn-cam{background:var(--teal);color:#fff}
+.btn-gal{background:#EAE8E1;color:var(--txt)}
+.btn-main{background:var(--teal);color:#fff;width:100%;padding:15px;font-size:15px;font-weight:700;border-radius:14px;border:none;cursor:pointer;display:flex;align-items:center;justify-content:center;gap:8px;box-shadow:0 4px 16px rgba(15,110,86,.3);margin-bottom:10px}
+.btn-main:disabled{background:#B4B2A9;box-shadow:none;cursor:not-allowed}
+
+/* ROLE SEL */
+.role-row{display:grid;grid-template-columns:1fr 1fr;gap:8px;margin-bottom:12px}
+.role-btn{border:1.5px solid var(--border);border-radius:10px;padding:11px;font-size:13px;font-weight:600;cursor:pointer;background:var(--card);transition:.15s}
+.role-active{border-color:var(--teal);background:var(--light);color:var(--teal)}
+.role-inactive{color:var(--sub)}
+
+/* STEPS */
+.steps-box{background:var(--card);border-radius:14px;border:1px solid var(--border);overflow:hidden;margin:12px 0}
+.step{display:flex;align-items:flex-start;gap:12px;padding:11px 14px;border-bottom:1px solid var(--border)}
+.step:last-child{border-bottom:none}
+.dot{width:26px;height:26px;border-radius:50%;display:flex;align-items:center;justify-content:center;flex-shrink:0;font-size:11px;font-weight:700;margin-top:1px}
+.dot-w{background:#F1EFE8;color:#ccc}
+.dot-r{background:#FFF8E1;color:#F57F17;animation:spin 1.2s linear infinite}
+.dot-d{background:var(--light);color:var(--teal)}
+.dot-e{background:#FEE;color:#c00}
+@keyframes spin{to{transform:rotate(360deg)}}
+.step-lbl{font-size:13px;font-weight:500}
+.step-sub{font-size:11px;color:var(--sub);margin-top:2px}
+
+/* ── PITCH DECK SLIDES ── */
+.deck-wrap{margin:14px 0}
+.deck-title{font-size:13px;font-weight:700;color:var(--sub);letter-spacing:.5px;text-transform:uppercase;margin-bottom:10px;display:flex;align-items:center;justify-content:space-between}
+.slide{border-radius:14px;overflow:hidden;margin-bottom:12px;position:relative;box-shadow:0 2px 12px rgba(0,0,0,.1)}
+.slide-wm{position:absolute;top:50%;left:50%;transform:translate(-50%,-50%) rotate(-20deg);font-size:60px;font-weight:700;letter-spacing:8px;opacity:.04;pointer-events:none;white-space:nowrap;color:inherit}
+.slide-num{position:absolute;top:14px;right:16px;font-size:9px;letter-spacing:1.5px;opacity:.4;font-weight:600}
+.slide-foot{position:absolute;bottom:12px;right:16px;font-size:9px;opacity:.45;font-weight:600}
+.s-inner{padding:28px 32px}
+
+/* Slide 1 — dark teal */
+.sl1{background:#085041;color:#fff}
+.sl1-kicker{font-size:9px;letter-spacing:2px;font-weight:700;color:var(--mint);margin-bottom:14px;display:flex;align-items:center;gap:6px}
+.sl1-kicker::before{content:'';display:inline-block;width:16px;height:1.5px;background:var(--mint)}
+.sl1-h1{font-size:20px;font-weight:700;line-height:1.25;margin-bottom:10px}
+.sl1-sub{font-size:11px;opacity:.75;line-height:1.65;margin-bottom:18px;max-width:340px}
+.proof-strip{display:flex;border:1px solid rgba(255,255,255,.15);border-radius:8px;overflow:hidden;margin-bottom:16px}
+.proof-cell{flex:1;padding:10px 14px;border-right:1px solid rgba(255,255,255,.12)}
+.proof-cell:last-child{border:none}
+.pv{font-size:18px;font-weight:700;color:var(--mint)}
+.pl{font-size:9px;opacity:.6;margin-top:1px}
+.hl-box{background:rgba(93,202,165,.12);border-left:3px solid var(--mint);padding:10px 14px;border-radius:0 6px 6px 0;font-size:11px;line-height:1.6;margin-bottom:14px}
+.free-pill{display:inline-flex;align-items:center;gap:5px;background:rgba(93,202,165,.18);border:1px solid var(--mint);border-radius:20px;padding:4px 12px;font-size:10px;font-weight:700;color:var(--mint);letter-spacing:.3px}
+
+/* Slide 2 — white */
+.sl2{background:#fff;color:#2C2C2A}
+.sl2-accent{height:4px;background:linear-gradient(90deg,var(--teal),var(--mint));position:absolute;top:0;left:0;right:0}
+.sl2-h{font-size:16px;font-weight:700;color:var(--dark);margin-bottom:4px}
+.sl2-sub{font-size:11px;color:var(--sub);margin-bottom:18px}
+.sol-grid{display:grid;grid-template-columns:1fr 1fr;gap:10px}
+.sol-card{background:#F1EFE8;border-radius:10px;padding:14px}
+.sol-prob{font-size:9px;font-weight:700;color:#993C1D;background:#FAECE7;padding:2px 7px;border-radius:4px;display:inline-block;margin-bottom:6px}
+.sol-ans{font-size:11px;color:#444;line-height:1.55}
+.sol-ans b{color:var(--teal)}
+.sav-bar{background:var(--dark);border-radius:8px;padding:12px 16px;display:flex;align-items:center;gap:14px;margin-top:12px;color:#fff}
+.sav-big{font-size:24px;font-weight:800;color:var(--mint);white-space:nowrap}
+.sav-txt{font-size:11px;line-height:1.5;opacity:.85}
+.free-bar{background:var(--light);border:1px solid var(--teal);border-radius:8px;padding:10px 14px;display:flex;align-items:center;gap:10px;margin-top:8px}
+.free-tag{background:var(--teal);color:#fff;font-size:9px;font-weight:700;padding:3px 8px;border-radius:20px;white-space:nowrap}
+.free-copy{font-size:11px;color:var(--dark)}
+
+/* Slide 3 — near black */
+.sl3{background:#04342C;color:#fff}
+.sl3-h{font-size:17px;font-weight:700;margin-bottom:4px}
+.sl3-sub{font-size:11px;opacity:.6;margin-bottom:18px}
+.ben-grid{display:grid;grid-template-columns:repeat(3,1fr);gap:8px;margin-bottom:14px}
+.ben-card{background:rgba(255,255,255,.07);border-radius:8px;padding:12px;border:1px solid rgba(255,255,255,.08)}
+.ben-icon{font-size:16px;margin-bottom:6px}
+.ben-title{font-size:11px;font-weight:700;margin-bottom:3px}
+.ben-desc{font-size:10px;opacity:.65;line-height:1.45}
+.cta-block{background:var(--teal);border-radius:8px;padding:14px 18px;display:flex;align-items:center;justify-content:space-between;gap:12px}
+.cta-txt{font-size:12px;font-weight:600;line-height:1.4;max-width:240px}
+.cta-right{text-align:right;flex-shrink:0;font-size:10px;opacity:.75;line-height:1.5}
+.cta-url{font-weight:700;color:var(--mint);font-size:11px;opacity:1}
+
+/* ACTION BUTTONS */
+.act-wrap{margin-top:14px}
+.btn-email{background:var(--teal);color:#fff;border-radius:12px;padding:14px;font-size:14px;font-weight:700;border:none;cursor:pointer;display:flex;align-items:center;justify-content:center;gap:8px;width:100%;text-decoration:none;box-shadow:0 4px 14px rgba(15,110,86,.3);margin-bottom:8px}
+.act-row{display:grid;grid-template-columns:1fr 1fr;gap:8px}
+.btn-wa{background:var(--wa);color:#fff;border-radius:12px;padding:12px;font-size:13px;font-weight:700;border:none;cursor:pointer;display:flex;align-items:center;justify-content:center;gap:6px;text-decoration:none}
+.btn-copy{background:#EAE8E1;color:var(--txt);border-radius:12px;padding:12px;font-size:13px;font-weight:600;border:none;cursor:pointer;display:flex;align-items:center;justify-content:center;gap:6px}
+
+/* BULK */
+.bulk-drop{border:2px dashed var(--border);border-radius:14px;background:var(--card);padding:28px 20px;text-align:center;cursor:pointer;margin-bottom:12px}
+.bulk-drop.loaded{border-style:solid;border-color:var(--teal);background:var(--light)}
+.format-pills{display:flex;gap:6px;justify-content:center;flex-wrap:wrap;margin-top:10px}
+.pill{font-size:10px;font-weight:700;padding:3px 8px;border-radius:20px;background:#EAE8E1;color:var(--sub)}
+.tpl-btn{background:var(--light);border:1px solid var(--teal);color:var(--teal);border-radius:10px;padding:10px 14px;font-size:13px;font-weight:600;width:100%;cursor:pointer;margin-bottom:10px;display:flex;align-items:center;justify-content:center;gap:7px}
+.ct-table{background:var(--card);border-radius:12px;border:1px solid var(--border);overflow:hidden;margin-bottom:12px}
+.ct-head{background:var(--dark);padding:11px 14px;display:flex;align-items:center;justify-content:space-between;color:#fff;font-size:13px;font-weight:700}
+.ct-badge{background:rgba(255,255,255,.15);font-size:10px;padding:2px 7px;border-radius:20px;font-weight:700}
+.ct-row{display:flex;align-items:center;gap:8px;padding:10px 14px;border-bottom:1px solid var(--border);font-size:13px}
+.ct-row:last-child{border:none}
+.ct-role{font-size:9px;font-weight:700;padding:2px 6px;border-radius:20px;white-space:nowrap}
+.ct-b{background:var(--buyer-light);color:var(--buyer)}
+.ct-m{background:var(--mfr-light);color:var(--mfr)}
+.ct-st{margin-left:auto;font-size:11px;font-weight:600}
+.st-w{color:#aaa}.st-r{color:#F57F17}.st-d{color:var(--teal)}.st-e{color:var(--red)}
+.bp-wrap{background:var(--card);border-radius:12px;border:1px solid var(--border);padding:14px;margin-bottom:12px}
+.bp-lbl{font-size:12px;font-weight:600;margin-bottom:8px;display:flex;justify-content:space-between}
+.bp-bar{height:7px;background:#EAE8E1;border-radius:4px;overflow:hidden}
+.bp-fill{height:100%;background:var(--teal);border-radius:4px;transition:width .4s}
+.btn-bulk{background:var(--teal);color:#fff;width:100%;padding:14px;font-size:15px;border-radius:12px;border:none;cursor:pointer;font-weight:700;display:flex;align-items:center;justify-content:center;gap:8px;margin-bottom:8px;box-shadow:0 3px 12px rgba(15,110,86,.3)}
+.btn-bulk:disabled{background:#B4B2A9;box-shadow:none;cursor:not-allowed}
+.btn-stop{background:var(--red);color:#fff;width:100%;padding:12px;font-size:14px;border-radius:12px;border:none;cursor:pointer;font-weight:700;display:none;margin-bottom:8px}
+.saved-bar{background:var(--light);border:1px solid var(--teal);border-radius:10px;padding:11px 14px;display:flex;align-items:center;gap:8px;font-size:13px;color:var(--dark);font-weight:500;margin-top:10px}
+
+input[type=file]{display:none}
+</style>
+</head>
+<body>
+
+<div class="topbar">
+  <div class="topbar-inner">
+    <div><div class="logo">KYPSON</div><div class="logo-sub">SMART PITCH SYSTEM</div></div>
+    <div style="font-size:10px;color:rgba(255,255,255,.4)">v3.0 — Ready</div>
+  </div>
+  <div class="tabs">
+    <button class="tab tab-active" id="tab1" onclick="sw('scan')">📷 Card Scan</button>
+    <button class="tab tab-inactive" id="tab2" onclick="sw('url')">🔗 URL Pitch</button>
+    <button class="tab tab-inactive" id="tab3" onclick="sw('bulk')">📂 Bulk Upload</button>
+  </div>
+</div>
+
+<div class="main">
+
+<!-- ═══ SCAN PANE ═══ -->
+<div class="pane active" id="scanPane">
+  <div class="field-wrap">
+    <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="#aaa" stroke-width="2" stroke-linecap="round"><path d="M4 4h16c1.1 0 2 .9 2 2v12c0 1.1-.9 2-2 2H4c-1.1 0-2-.9-2-2V6c0-1.1.9-2 2-2z"/><polyline points="22,6 12,12 2,6"/></svg>
+    <input class="field-input" id="myEmail" type="email" placeholder="Your email (CC)" autocomplete="email">
+  </div>
+  <div class="capture-wrap" id="zone" style="position:relative">
+    <div class="capture-empty" id="zoneInner">
+      <div class="cap-icon"><svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="#0F6E56" stroke-width="2" stroke-linecap="round"><path d="M23 19a2 2 0 0 1-2 2H3a2 2 0 0 1-2-2V8a2 2 0 0 1 2-2h4l2-3h6l2 3h4a2 2 0 0 1 2 2z"/><circle cx="12" cy="13" r="4"/></svg></div>
+      <div class="cap-title">Scan a business card</div>
+      <div class="cap-sub">Take photo or upload from gallery</div>
+    </div>
+  </div>
+  <div class="btn-row">
+    <button class="btn btn-cam" onclick="$('cam').click()">📷 Camera</button>
+    <button class="btn btn-gal" onclick="$('gal').click()">🖼 Gallery</button>
+  </div>
+  <button class="btn-main" id="scanBtn" onclick="runScan()" disabled>Generate Pitch Deck</button>
+  <input type="file" id="cam" accept="image/*" capture="environment" onchange="gotFile(this,'scan')">
+  <input type="file" id="gal" accept="image/*" onchange="gotFile(this,'scan')">
+  <div class="steps-box" id="scanSteps" style="display:none">
+    <div class="step"><div class="dot dot-w" id="sd1">1</div><div><div class="step-lbl">Reading card</div><div class="step-sub" id="st1">Extracting details...</div></div></div>
+    <div class="step"><div class="dot dot-w" id="sd2">2</div><div><div class="step-lbl">Detecting role</div><div class="step-sub" id="st2">Buyer or manufacturer?</div></div></div>
+    <div class="step"><div class="dot dot-w" id="sd3">3</div><div><div class="step-lbl">Researching company</div><div class="step-sub" id="st3">Visiting website...</div></div></div>
+    <div class="step"><div class="dot dot-w" id="sd4">4</div><div><div class="step-lbl">Building pitch deck</div><div class="step-sub" id="st4">Writing slides...</div></div></div>
+  </div>
+  <div id="scanDeck"></div>
+  <div id="scanAct" style="display:none"></div>
+</div>
+
+<!-- ═══ URL PANE ═══ -->
+<div class="pane" id="urlPane">
+  <div class="field-wrap">
+    <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="#aaa" stroke-width="2" stroke-linecap="round"><path d="M10 13a5 5 0 0 0 7.54.54l3-3a5 5 0 0 0-7.07-7.07l-1.72 1.71"/><path d="M14 11a5 5 0 0 0-7.54-.54l-3 3a5 5 0 0 0 7.07 7.07l1.71-1.71"/></svg>
+    <input class="field-input" id="urlInput" type="url" placeholder="https://www.companywebsite.com">
+  </div>
+  <div class="field-wrap">
+    <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="#aaa" stroke-width="2" stroke-linecap="round"><path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"/><circle cx="12" cy="7" r="4"/></svg>
+    <input class="field-input" id="urlName" placeholder="Contact name (optional)">
+  </div>
+  <div class="field-wrap">
+    <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="#aaa" stroke-width="2" stroke-linecap="round"><path d="M22 16.92v3a2 2 0 0 1-2.18 2 19.79 19.79 0 0 1-8.63-3.07A19.5 19.5 0 0 1 4.07 10a19.79 19.79 0 0 1-3.07-8.67A2 2 0 0 1 3 1.17h3a2 2 0 0 1 2 1.72c.127.96.361 1.903.7 2.81a2 2 0 0 1-.45 2.11L7.09 8.09a16 16 0 0 0 6 6l1.27-1.27a2 2 0 0 1 2.11-.45c.907.339 1.85.573 2.81.7A2 2 0 0 1 21 15z"/></svg>
+    <input class="field-input" id="urlPhone" type="tel" placeholder="WhatsApp / Phone">
+  </div>
+  <div class="field-wrap">
+    <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="#aaa" stroke-width="2" stroke-linecap="round"><path d="M4 4h16c1.1 0 2 .9 2 2v12c0 1.1-.9 2-2 2H4c-1.1 0-2-.9-2-2V6c0-1.1.9-2 2-2z"/><polyline points="22,6 12,12 2,6"/></svg>
+    <input class="field-input" id="urlEmail2" type="email" placeholder="Their email">
+  </div>
+  <div class="field-wrap">
+    <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="#aaa" stroke-width="2" stroke-linecap="round"><path d="M4 4h16c1.1 0 2 .9 2 2v12c0 1.1-.9 2-2 2H4c-1.1 0-2-.9-2-2V6c0-1.1.9-2 2-2z"/><polyline points="22,6 12,12 2,6"/></svg>
+    <input class="field-input" id="myEmailUrl" type="email" placeholder="Your email (CC)">
+  </div>
+  <div class="role-row">
+    <button class="role-btn role-active" id="rb1" onclick="setRole('buyer')">🛒 Buyer</button>
+    <button class="role-btn role-inactive" id="rb2" onclick="setRole('manufacturer')">📦 Manufacturer</button>
+  </div>
+  <button class="btn-main" id="urlBtn" onclick="runUrl()">Research &amp; Generate Pitch Deck</button>
+  <div class="steps-box" id="urlSteps" style="display:none">
+    <div class="step"><div class="dot dot-w" id="ud1">1</div><div><div class="step-lbl">Researching company</div><div class="step-sub" id="ut1">Visiting website...</div></div></div>
+    <div class="step"><div class="dot dot-w" id="ud2">2</div><div><div class="step-lbl">Building pitch deck</div><div class="step-sub" id="ut2">Writing slides...</div></div></div>
+  </div>
+  <div id="urlDeck"></div>
+  <div id="urlAct" style="display:none"></div>
+</div>
+
+<!-- ═══ BULK PANE ═══ -->
+<div class="pane" id="bulkPane">
+  <div class="field-wrap">
+    <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="#aaa" stroke-width="2" stroke-linecap="round"><path d="M4 4h16c1.1 0 2 .9 2 2v12c0 1.1-.9 2-2 2H4c-1.1 0-2-.9-2-2V6c0-1.1.9-2 2-2z"/><polyline points="22,6 12,12 2,6"/></svg>
+    <input class="field-input" id="myEmailBulk" type="email" placeholder="Your email (CC on all)">
+  </div>
+  <button class="tpl-btn" onclick="dlTemplate()">⬇ Download Excel Template</button>
+  <div class="bulk-drop" id="bulkZone" onclick="$('bulkFile').click()"
+    ondragover="event.preventDefault();this.classList.add('loaded')"
+    ondragleave="this.classList.remove('loaded')"
+    ondrop="onBulkDrop(event)">
+    <div class="cap-icon" style="margin:0 auto 10px"><svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="#0F6E56" stroke-width="2" stroke-linecap="round"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/><polyline points="14 2 14 8 20 8"/></svg></div>
+    <div class="cap-title" id="bulkZoneTitle">Upload contact list</div>
+    <div class="cap-sub">Tap to browse or drag & drop</div>
+    <div class="format-pills"><span class="pill">Excel</span><span class="pill">CSV</span><span class="pill">PDF</span></div>
+  </div>
+  <input type="file" id="bulkFile" accept=".xlsx,.xls,.csv,.pdf" onchange="onBulkFile(this)">
+  <div id="ctTable" style="display:none"></div>
+  <div class="bp-wrap" id="bpWrap" style="display:none"><div class="bp-lbl"><span id="bpLbl">Processing...</span><span id="bpCnt">0/0</span></div><div class="bp-bar"><div class="bp-fill" id="bpFill" style="width:0%"></div></div></div>
+  <button class="btn-bulk" id="bulkBtn" onclick="runBulk()" style="display:none" disabled>▶ Send All Pitches</button>
+  <button class="btn-stop" id="bulkStop" onclick="stopBulk()">■ Stop</button>
+  <div id="bulkSum"></div>
+</div>
+
+</div><!-- /main -->
+
+<script>
+const KEY='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';
+// Key embedded — no input needed
+const $=id=>document.getElementById(id);
+let imgB64=null, pitchStore={}, bulkContacts=[], bulkStop_=false, selRole='buyer';
+
+// ── TABS ──
+function sw(t){
+  ['scan','url','bulk'].forEach(x=>{
+    $(`${x}Pane`).classList.toggle('active',x===t);
+  });
+  ['tab1','tab2','tab3'].forEach((id,i)=>{
+    $(id).className='tab '+((['scan','url','bulk'][i]===t)?'tab-active':'tab-inactive');
+  });
+}
+
+// ── ROLE ──
+function setRole(r){
+  selRole=r;
+  $('rb1').className='role-btn '+(r==='buyer'?'role-active':'role-inactive');
+  $('rb2').className='role-btn '+(r==='manufacturer'?'role-active':'role-inactive');
+}
+
+// ── FILE INPUT ──
+function gotFile(inp,mode){
+  const f=inp.files[0];if(!f)return;
+  const r=new FileReader();
+  r.onload=ev=>{
+    imgB64=ev.target.result.split(',')[1];
+    if(mode==='scan'){
+      const z=$('zone');z.className='capture-wrap has-img';z.style.position='relative';
+      z.innerHTML=`<img style="width:100%;max-height:200px;object-fit:cover;display:block;border-radius:14px" src="${ev.target.result}"><div class="img-badge">✓ Card ready</div>`;
+      $('scanBtn').disabled=false;
+    }
+  };
+  r.readAsDataURL(f);inp.value='';
+}
+
+// ── API CALL ──
+async function api(msgs,tools=[]){
+  const b={model:'claude-sonnet-4-20250514',max_tokens:5000,messages:msgs};
+  if(tools.length)b.tools=tools;
+  const r=await fetch('/proxy',{
+    method:'POST',
+    headers:{'Content-Type':'application/json'},
+    body:JSON.stringify(b)
+  });
+  if(!r.ok){const e=await r.json();throw new Error(e?.error?.message||'API error');}
+  return r.json();
+}
+function xj(t){try{const m=t.match(/\{[\s\S]*\}/);return m?JSON.parse(m[0]):null;}catch{return null;}}
+function e(s){return String(s||'').replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;');}
+const delay=ms=>new Promise(r=>setTimeout(r,ms));
+
+// ── STEP HELPERS ──
+function ds(prefix,n,st,sub){
+  const d=$(prefix+'d'+n);
+  d.className='dot dot-'+{d:'d',e:'e',r:'r',w:'w'}[st[0]];
+  d.textContent={d:'✓',e:'✗',r:'↻',w:n}[st[0]]||n;
+  if(sub)$(prefix+'t'+n).textContent=sub;
+}
+
+// ══════════════════════════
+// CARD SCAN FLOW
+// ══════════════════════════
+async function runScan(){
+  if(!imgB64)return;
+  $('scanBtn').disabled=true;$('scanBtn').textContent='Generating...';
+  $('scanSteps').style.display='block';$('scanDeck').innerHTML='';$('scanAct').style.display='none';
+
+  // Step 1 — read card
+  ds('s',1,'r','Reading card...');
+  let card={};
+  try{
+    const r=await api([{role:'user',content:[
+      {type:'image',source:{type:'base64',media_type:'image/jpeg',data:imgB64}},
+      {type:'text',text:'Read every word on this business card. Return ONLY JSON: {"name":"","title":"","company":"","email":"","phone":"","website":"","address":"","industry":""}'}
+    ]}]);
+    card=xj(r.content.filter(b=>b.type==='text').map(b=>b.text).join(''))||{};
+    ds('s',1,'d',`${card.name||'Contact'} · ${card.company||'Company'}`);
+  }catch(err){ds('s',1,'e','Could not read card');$('scanBtn').disabled=false;$('scanBtn').textContent='Generate Pitch Deck';return;}
+
+  // Step 2 — detect role
+  ds('s',2,'r','Detecting role...');
+  let role='buyer';
+  try{
+    const mKw=['manufactur','production','factory','woven','corrugat','laminate','printing','extrusion','supplier','polypack','polyfab','polysack','polyplast'];
+    const tl=((card.title||'')+(card.company||'')).toLowerCase();
+    if(mKw.some(k=>tl.includes(k)))role='manufacturer';
+    else{
+      const r2=await api([{role:'user',content:`Title: "${card.title}", Company: "${card.company}". Is this a packaging MANUFACTURER or packaging BUYER? ONE word: manufacturer OR buyer`}]);
+      if(r2.content.filter(b=>b.type==='text').map(b=>b.text).join('').toLowerCase().includes('manufactur'))role='manufacturer';
+    }
+    ds('s',2,'d',role==='manufacturer'?'📦 Packaging Manufacturer':'🛒 Packaging Buyer');
+  }catch{ds('s',2,'d','Buyer (default)');}
+  card.role=role;
+
+  // Step 3 — research
+  ds('s',3,'r',`Researching ${card.company||'company'}...`);
+  let co={...card,companyName:card.company};
+  try{
+    const prompt=role==='manufacturer'
+      ?`Research packaging manufacturer: ${card.company} website: ${card.website||''}. Return ONLY JSON: {"companyName":"","description":"2 sentences","products":["4 packaging products they make"],"painPoints":["3 manufacturer challenges"],"opportunity":"biggest Kypson opportunity"}`
+      :`Research company: ${card.company} website: ${card.website||''}. Return ONLY JSON: {"companyName":"","description":"2 sentences","packagingNeeds":["4 packaging types they buy"],"painPoints":["3 procurement pain points"],"compliance":"certs they need","opportunity":"biggest Kypson opportunity"}`;
+    const r3=await api([{role:'user',content:prompt}],[{type:'web_search_20250305',name:'web_search'}]);
+    co={...co,...(xj(r3.content.filter(b=>b.type==='text').map(b=>b.text).join(''))||{})};
+    ds('s',3,'d',co.description?.split('.')[0]||co.companyName);
+  }catch{ds('s',3,'e','Used card data only');}
+
+  // Step 4 — build deck
+  ds('s',4,'r','Writing pitch slides...');
+  try{
+    const r4=await api([{role:'user',content:pitchPrompt(co,role)}]);
+    const pitch=xj(r4.content.filter(b=>b.type==='text').map(b=>b.text).join(''))||{};
+    ds('s',4,'d','Pitch deck ready ✓');
+    const myEmail=$('myEmail').value.trim();
+    renderDeck(co,pitch,role,'scanDeck','scanAct',myEmail);
+    pitchStore.scan={co,pitch,role,myEmail};
+  }catch(err){ds('s',4,'e','Generation failed: '+err.message);}
+
+  $('scanBtn').disabled=false;$('scanBtn').textContent='Scan Another Card';
+}
+
+// ══════════════════════════
+// URL FLOW
+// ══════════════════════════
+async function runUrl(){
+  const url=$('urlInput').value.trim();
+  if(!url){alert('Please enter a company URL.');return;}
+  const role=selRole;
+  $('urlBtn').disabled=true;$('urlBtn').textContent='Researching...';
+  $('urlSteps').style.display='block';$('urlDeck').innerHTML='';$('urlAct').style.display='none';
+
+  ds('u',1,'r',`Visiting ${url}...`);
+  let co={name:$('urlName').value.trim(),phone:$('urlPhone').value.trim(),email:$('urlEmail2').value.trim(),website:url,role,companyName:''};
+  try{
+    const prompt=role==='manufacturer'
+      ?`Research packaging manufacturer: ${url}. Return ONLY JSON: {"companyName":"","description":"2 sentences","products":["4 products they make"],"painPoints":["3 challenges"],"opportunity":"Kypson opportunity"}`
+      :`Research company: ${url}. Return ONLY JSON: {"companyName":"","description":"2 sentences","packagingNeeds":["4 packaging types"],"painPoints":["3 pain points"],"compliance":"certs needed","opportunity":"Kypson opportunity"}`;
+    const r=await api([{role:'user',content:prompt}],[{type:'web_search_20250305',name:'web_search'}]);
+    co={...co,...(xj(r.content.filter(b=>b.type==='text').map(b=>b.text).join(''))||{})};
+    if($('urlName').value.trim())co.name=$('urlName').value.trim();
+    ds('u',1,'d',co.description?.split('.')[0]||co.companyName||url);
+  }catch{ds('u',1,'e','Research failed');}
+
+  ds('u',2,'r','Writing pitch slides...');
+  try{
+    const r2=await api([{role:'user',content:pitchPrompt(co,role)}]);
+    const pitch=xj(r2.content.filter(b=>b.type==='text').map(b=>b.text).join(''))||{};
+    ds('u',2,'d','Pitch deck ready ✓');
+    const myEmail=$('myEmailUrl').value.trim();
+    renderDeck(co,pitch,role,'urlDeck','urlAct',myEmail);
+    pitchStore.url={co,pitch,role,myEmail};
+  }catch(err){ds('u',2,'e','Failed: '+err.message);}
+
+  $('urlBtn').disabled=false;$('urlBtn').textContent='Research & Generate Pitch Deck';
+}
+
+// ══════════════════════════
+// PITCH PROMPT
+// ══════════════════════════
+function pitchPrompt(co,role){
+  const isMfr=role==='manufacturer';
+  const base=isMfr
+    ?`Create a 3-slide pitch deck for packaging MANUFACTURER: ${co.companyName}. Title: ${co.title||''}. Products: ${(co.products||[]).join(', ')||'packaging products'}.
+KYPSON SUPPLIER FACTS: World's First AI-powered B2B Packaging Marketplace. Free to join. AI-matched qualified buyer RFQs delivered. No cold calling. GST-verified buyers. Escrow payments. Full digital order lifecycle RFQ→PO→SO→QC→Dispatch. Early partner advantage.`
+    :`Create a 3-slide pitch deck for packaging BUYER: ${co.companyName}. Needs: ${(co.packagingNeeds||[]).join(', ')||'packaging'}. Compliance: ${co.compliance||''}.
+KYPSON BUYER FACTS: World's First AI-powered B2B Packaging Marketplace. Free to use. Save up to 7% on packaging costs. AI-matched GST-verified suppliers. AI QC at production. Escrow payments. End-to-end digital.`;
+  return base+`
+Return ONLY this JSON:
+{
+  "slide1":{"kicker":"5-word punchy hook","headline":"8-word compelling headline","hook":"2 hard-hitting sentences on their packaging situation","insight":"2 sentences on the Kypson opportunity for them","stats":[{"val":"Up to 7%","lbl":"potential packaging savings"},{"val":"stat2","lbl":"label2"},{"val":"stat3","lbl":"label3"}]},
+  "slide2":{"headline":"How Kypson solves [CompanyName] packaging challenges","solutions":[{"prob":"pain1","sol":"solution1"},{"prob":"pain2","sol":"solution2"},{"prob":"pain3","sol":"solution3"},{"prob":"pain4","sol":"solution4"}],"savingsCopy":"one line on savings/free"},
+  "slide3":{"headline":"Why ${co.companyName} should choose Kypson","benefits":[{"icon":"🤖","title":"AI Matchmaking","desc":"10-word description"},{"icon":"💰","title":"Save Up to 7%","desc":"10-word description"},{"icon":"✅","title":"Verified Suppliers","desc":"10-word description"},{"icon":"🔒","title":"Zero-Risk Payments","desc":"10-word description"},{"icon":"📦","title":"AI Quality Control","desc":"10-word description"},{"icon":"🆓","title":"Absolutely Free","desc":"10-word description"}],"cta":"bold closing call to action sentence"},
+  "subject":"email subject line",
+  "greeting":"Dear [name],",
+  "body":"3-4 paragraph email body",
+  "ps":"one line P.S."
+}`;
+}
+
+// ══════════════════════════
+// RENDER DECK + ACTIONS
+// ══════════════════════════
+function renderDeck(co,p,role,deckId,actId,myEmail){
+  const isMfr=role==='manufacturer';
+  const s1=p.slide1||{},s2=p.slide2||{},s3=p.slide3||{};
+
+  $( deckId).innerHTML=`
+<div class="deck-wrap">
+  <div class="deck-title"><span>PITCH DECK · 3 SLIDES</span><span style="color:var(--teal);font-size:11px">${e(co.companyName||'')}</span></div>
+
+  <!-- SLIDE 1 -->
+  <div class="slide sl1">
+    <div class="slide-wm">KYPSON</div>
+    <div class="slide-num" style="color:rgba(255,255,255,.4)">01/03</div>
+    <div class="slide-foot" style="color:rgba(255,255,255,.4)">KYPSON · www.kypson.com</div>
+    <div class="s-inner">
+      <div class="sl1-kicker">${e(s1.kicker||'PARTNERSHIP OPPORTUNITY')}</div>
+      <div class="sl1-h1">${e(s1.headline||co.companyName+' × Kypson')}</div>
+      <div class="sl1-sub">${e(s1.hook||'')}</div>
+      <div class="hl-box">${e(s1.insight||'Kypson is the World\'s First AI-powered B2B Packaging Marketplace — built for companies like '+co.companyName+'.')}</div>
+      <div class="proof-strip">${(s1.stats||[]).map(st=>`<div class="proof-cell"><div class="pv">${e(st.val)}</div><div class="pl">${e(st.lbl)}</div></div>`).join('')}</div>
+      <div class="free-pill">✓ ABSOLUTELY FREE · NO FEES · NO SUBSCRIPTION</div>
+    </div>
+  </div>
+
+  <!-- SLIDE 2 -->
+  <div class="slide sl2">
+    <div class="sl2-accent"></div>
+    <div class="slide-wm" style="color:#0F6E56">KYPSON</div>
+    <div class="slide-num" style="color:#aaa">02/03</div>
+    <div class="slide-foot" style="color:#0F6E56;opacity:.5">KYPSON · www.kypson.com</div>
+    <div class="s-inner" style="padding-top:32px">
+      <div class="sl2-h">${e(s2.headline||'How Kypson solves '+co.companyName)}</div>
+      <div class="sl2-sub">Precision sourcing · Zero guesswork · Guaranteed results</div>
+      <div class="sol-grid">
+        ${(s2.solutions||[]).map(s=>`<div class="sol-card"><div class="sol-prob">${e(s.prob)}</div><div class="sol-ans"><b>Kypson:</b> ${e(s.sol)}</div></div>`).join('')}
+      </div>
+      <div class="sav-bar">
+        <div class="sav-big">${isMfr?'FREE':'Up to 7%'}</div>
+        <div class="sav-txt"><b>${isMfr?'Zero cost to join Kypson':'Potential packaging cost savings'}</b><br>${e(s2.savingsCopy||'')}</div>
+      </div>
+      <div class="free-bar">
+        <span class="free-tag">ABSOLUTELY FREE</span>
+        <span class="free-copy">No registration fee. No listing fee. No commission cuts.</span>
+      </div>
+    </div>
+  </div>
+
+  <!-- SLIDE 3 -->
+  <div class="slide sl3">
+    <div class="slide-wm">KYPSON</div>
+    <div class="slide-num" style="color:rgba(255,255,255,.4)">03/03</div>
+    <div class="slide-foot" style="color:rgba(255,255,255,.4)">KYPSON · www.kypson.com</div>
+    <div class="s-inner">
+      <div class="sl3-h">${e(s3.headline||'Why choose Kypson')}</div>
+      <div class="sl3-sub">From first RFQ to final delivery — one intelligent platform</div>
+      <div class="ben-grid">
+        ${(s3.benefits||[]).map(b=>`<div class="ben-card"><div class="ben-icon">${b.icon||'✅'}</div><div class="ben-title">${e(b.title)}</div><div class="ben-desc">${e(b.desc)}</div></div>`).join('')}
+      </div>
+      <div class="cta-block">
+        <div class="cta-txt">${e(s3.cta||'Register free at www.kypson.com')}</div>
+        <div class="cta-right"><div class="cta-url">www.kypson.com</div><div>+91-9081566556</div><div>Ahmedabad, Gujarat</div></div>
+      </div>
+    </div>
+  </div>
+</div>`;
+
+  // Build links
+  const isMfr2=role==='manufacturer';
+  const emailBody=buildEmailBody(co,p,isMfr2);
+  const waText=buildWA(co,p,isMfr2);
+  const ph=(co.phone||'').replace(/\D/g,'');
+  const waUrl=ph.length>=10?`https://wa.me/${ph.startsWith('91')?ph:'91'+ph}?text=${encodeURIComponent(waText)}`:`https://wa.me/?text=${encodeURIComponent(waText)}`;
+  const cc=myEmail?`&cc=${encodeURIComponent(myEmail)}`:'';
+  const mailUrl=`mailto:${co.email||''}?subject=${encodeURIComponent(p.subject||'Kypson Partnership — '+co.companyName)}${cc}&body=${encodeURIComponent(emailBody)}`;
+
+  $(actId).innerHTML=`
+<div class="act-wrap">
+  <a href="${mailUrl}" class="btn-email">✉️ Open Email App</a>
+  <div class="act-row">
+    <a href="${waUrl}" target="_blank" rel="noopener" class="btn-wa">
+      <svg width="15" height="15" viewBox="0 0 24 24" fill="currentColor"><path d="M17.472 14.382c-.297-.149-1.758-.867-2.03-.967-.273-.099-.471-.148-.67.15-.197.297-.767.966-.94 1.164-.173.199-.347.223-.644.075-.297-.15-1.255-.463-2.39-1.475-.883-.788-1.48-1.761-1.653-2.059-.173-.297-.018-.458.13-.606.134-.133.298-.347.446-.52.149-.174.198-.298.298-.497.099-.198.05-.371-.025-.52-.075-.149-.669-1.612-.916-2.207-.242-.579-.487-.5-.669-.51-.173-.008-.371-.01-.57-.01-.198 0-.52.074-.792.372-.272.297-1.04 1.016-1.04 2.479 0 1.462 1.065 2.875 1.213 3.074.149.198 2.096 3.2 5.077 4.487.709.306 1.262.489 1.694.625.712.227 1.36.195 1.871.118.571-.085 1.758-.719 2.006-1.413.248-.694.248-1.289.173-1.413-.074-.124-.272-.198-.57-.347m-5.421 7.403h-.004a9.87 9.87 0 01-5.031-1.378l-.361-.214-3.741.982.998-3.648-.235-.374a9.86 9.86 0 01-1.51-5.26c.001-5.45 4.436-9.884 9.888-9.884 2.64 0 5.122 1.03 6.988 2.898a9.825 9.825 0 012.893 6.994c-.003 5.45-4.437 9.884-9.885 9.884m8.413-18.297A11.815 11.815 0 0012.05 0C5.495 0 .16 5.335.157 11.892c0 2.096.547 4.142 1.588 5.945L.057 24l6.305-1.654a11.882 11.882 0 005.683 1.448h.005c6.554 0 11.89-5.335 11.893-11.893a11.821 11.821 0 00-3.48-8.413z"/></svg>
+      WhatsApp
+    </a>
+    <button class="btn-copy" onclick="copyWA('${deckId}')">📋 Copy Text</button>
+  </div>
+</div>`;
+  $(actId).style.display='block';
+  $(actId).dataset.wa=waText;
+}
+
+function copyWA(deckId){
+  const key=deckId==='scanDeck'?'scan':'url';
+  const {co,pitch:p,role}=pitchStore[key]||{};
+  if(!co)return;
+  navigator.clipboard.writeText(buildWA(co,p,role==='manufacturer')).then(()=>{
+    const btns=document.querySelectorAll('.btn-copy');
+    btns.forEach(b=>{b.textContent='✓ Copied!';setTimeout(()=>b.textContent='📋 Copy Text',2000);});
+  });
+}
+
+// ══════════════════════════
+// BUILD TEXT CONTENT
+// ══════════════════════════
+function buildWA(co,p,isMfr){
+  const first=(co.name||'').split(' ')[0]||'';
+  const cn=co.companyName||co.company||'your company';
+  if(isMfr)return `Dear ${first},\n\nIt was a pleasure connecting with you! 🤝\n\nI'd like to introduce *Kypson* — the *World's First AI-powered B2B Packaging Marketplace*, built to help manufacturers like *${cn}* grow faster and reach more buyers.\n\nHere's what Kypson does for you as a Supplier —\n\n🎯 *Qualified Buyers, Delivered to You*\nReceive AI-matched RFQs for your exact product range — no cold calls, no chasing.\n\n📦 *100% Digital Order Management*\nRFQ → PO → SO → QC → Dispatch — all on one platform.\n\n✅ *Build Trust at Scale*\nGST-verified profile & certifications visible to buyers across India & global markets.\n\n💳 *Assured Payments*\nEscrow-protected — you get paid on time, every time.\n\n🆓 *Absolutely Free to Join*\nNo registration fee. No listing fee. No commission cuts.\n\n👉 *Register now:* www.kypson.com\n\nWould love to have *${cn}* as one of our partners.\n\nCan we schedule a quick 15-minute call?\n\n——————————————\n*Suryansh Jain*\nChief Operating Officer\n*KYPSON*\n🌐 www.kypson.com\n📞 +91-9081566556\nAhmedabad, Gujarat`;
+  return `Dear ${first},\n\nIt was a pleasure connecting with you! 🤝\n\nI'd like to introduce *Kypson* — the *World's First AI-powered B2B Packaging Marketplace*, built to transform how companies like *${cn}* source packaging.\n\nHere's what Kypson does for you —\n\n🤖 *AI-Matched Verified Suppliers*\nBest-fit, GST-verified supplier for your exact requirement — in seconds.\n\n💰 *Save Up to 7% on Packaging Costs*\nCompetitive quotations, transparent pricing, no middlemen.\n\n✅ *Quality You Can Trust*\nAI image-based QC at production — zero surprises at delivery.\n\n🔒 *Zero-Risk Payments*\nFunds in escrow until QC approved. 100% protected.\n\n🆓 *Absolutely Free to Use*\nNo subscription. No hidden fees.\n\n👉 *Start sourcing now:* www.kypson.com\n\nCan we schedule a quick 15-minute demo?\n\n——————————————\n*Suryansh Jain*\nChief Operating Officer\n*KYPSON*\n🌐 www.kypson.com\n📞 +91-9081566556\nAhmedabad, Gujarat`;
+}
+
+function buildEmailBody(co,p,isMfr){
+  const first=(co.name||'').split(' ')[0]||'Sir/Ma\'am';
+  let b=`Dear ${first},\n\n${p.body||''}\n\n`;
+  if(!isMfr)b+=`Save up to 7% on packaging costs through AI-matched competitive quotations.\n\n`;
+  b+=`Absolutely Free — No registration fee. No listing fee. No commission cuts.\n\n`;
+  b+=`Register / Login: www.kypson.com\n\n${p.cta||'We would love to have you onboard.'}\n\n`;
+  b+=`Warm regards,\nSuryansh Jain\nChief Operating Officer — Kypson\nwww.kypson.com | +91-9081566556\nAhmedabad, Gujarat\n\nP.S. ${p.ps||'Kypson is absolutely free — zero risk, massive upside.'}`;
+  return b;
+}
+
+// ══════════════════════════
+// BULK UPLOAD
+// ══════════════════════════
+function dlTemplate(){
+  const ws=XLSX.utils.aoa_to_sheet([
+    ['Name','Company','Email','Phone','Website','Title','Role'],
+    ['Rajesh Shah','Parle Products','rajesh@parle.com','9876543210','www.parle.com','Purchase Manager','buyer'],
+    ['Suresh Patel','ABC Polypack','suresh@abc.com','9123456789','www.abcpack.com','MD','manufacturer'],
+  ]);
+  const wb=XLSX.utils.book_new();XLSX.utils.book_append_sheet(wb,ws,'Contacts');
+  XLSX.writeFile(wb,'Kypson_Contacts.xlsx');
+}
+function onBulkDrop(ev){ev.preventDefault();$('bulkZone').classList.add('loaded');const f=ev.dataTransfer.files[0];if(f)parseBulk(f);}
+function onBulkFile(inp){const f=inp.files[0];if(f)parseBulk(f);inp.value='';}
+
+async function parseBulk(f){
+  $('bulkZoneTitle').textContent='📂 '+f.name;
+  bulkContacts=[];
+  const ext=f.name.split('.').pop().toLowerCase();
+  if(ext==='xlsx'||ext==='xls'){
+    const ab=await f.arrayBuffer();
+    const wb=XLSX.read(ab,{type:'array'});
+    const rows=XLSX.utils.sheet_to_json(wb.Sheets[wb.SheetNames[0]],{defval:''});
+    bulkContacts=rows.map(normRow).filter(c=>c.name||c.company);
+  }else if(ext==='csv'){
+    const txt=await f.text();
+    const lines=txt.trim().split('\n');
+    const hdrs=lines[0].split(',').map(h=>h.trim().toLowerCase().replace(/"/g,''));
+    bulkContacts=lines.slice(1).map(l=>{
+      const vals=l.split(',').map(v=>v.trim().replace(/"/g,''));
+      const obj={};hdrs.forEach((h,i)=>obj[h]=vals[i]||'');
+      return normRow(obj);
+    }).filter(c=>c.name||c.company);
+  }
+  renderCT();
+}
+
+function normRow(r){
+  const get=(...keys)=>{for(const k of keys){for(const rk of Object.keys(r)){if(rk.toLowerCase().includes(k)&&r[rk])return String(r[rk]).trim();}}return '';};
+  const co=get('company','org','business');const ti=get('title','designation','position');
+  return{name:get('name'),company:co,email:get('email','mail'),phone:get('phone','mobile','whatsapp'),website:get('website','url','web'),title:ti,role:detectRole(get('role','type'),ti,co)};
+}
+function detectRole(ex,ti,co){
+  if(ex&&ex.toLowerCase().includes('manu'))return'manufacturer';
+  if(ex&&ex.toLowerCase().includes('buy'))return'buyer';
+  const mKw=['manufactur','polypack','polyfab','factory','woven','corrugat','laminate','printing','extrusion','supplier'];
+  return mKw.some(k=>(ti+' '+co).toLowerCase().includes(k))?'manufacturer':'buyer';
+}
+
+function renderCT(){
+  if(!bulkContacts.length)return;
+  $('ctTable').style.display='block';
+  $('ctTable').innerHTML=`<div class="ct-table"><div class="ct-head"><span>Contacts loaded</span><span class="ct-badge">${bulkContacts.length}</span></div>${bulkContacts.map((c,i)=>`<div class="ct-row" id="crow${i}"><div style="flex:1;min-width:0"><div style="font-weight:600;font-size:13px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap">${e(c.name||c.company)}</div><div style="font-size:11px;color:var(--sub);overflow:hidden;text-overflow:ellipsis;white-space:nowrap">${e(c.company)}${c.email?' · '+c.email:''}</div></div><span class="ct-role ${c.role==='manufacturer'?'ct-m':'ct-b'}">${c.role==='manufacturer'?'MFR':'BUYER'}</span><span class="ct-st st-w" id="cst${i}">Pending</span></div>`).join('')}</div>`;
+  $('bulkBtn').style.display='flex';$('bulkBtn').disabled=false;
+}
+
+async function runBulk(){
+  bulkStop_=false;$('bulkBtn').style.display='none';$('bulkStop').style.display='block';
+  $('bpWrap').style.display='block';$('bulkSum').innerHTML='';
+  let ok=0,fail=0;
+  for(let i=0;i<bulkContacts.length;i++){
+    if(bulkStop_)break;
+    const c=bulkContacts[i];
+    $(`cst${i}`).className='ct-st st-r';$(`cst${i}`).textContent='Sending...';
+    $('bpLbl').textContent=c.name||c.company||'Contact '+(i+1);
+    $('bpCnt').textContent=`${i+1}/${bulkContacts.length}`;
+    $('bpFill').style.width=((i+1)/bulkContacts.length*100)+'%';
+    try{
+      const co={...c,companyName:c.company};
+      const r=await api([{role:'user',content:pitchPrompt(co,c.role)}]);
+      const pitch=xj(r.content.filter(b=>b.type==='text').map(b=>b.text).join(''))||{};
+      const isMfr=c.role==='manufacturer';
+      const myEmail=$('myEmailBulk').value.trim();
+      const body=buildEmailBody(co,pitch,isMfr);
+      const subj=pitch.subject||'Kypson Partnership — '+co.companyName;
+      const cc=myEmail?`&cc=${encodeURIComponent(myEmail)}`:'';
+      const a=document.createElement('a');
+      a.href=`mailto:${c.email||''}?subject=${encodeURIComponent(subj)}${cc}&body=${encodeURIComponent(body)}`;
+      a.target='_blank';document.body.appendChild(a);a.click();setTimeout(()=>document.body.removeChild(a),300);
+      $(`cst${i}`).className='ct-st st-d';$(`cst${i}`).textContent='✓ Done';ok++;
+    }catch{$(`cst${i}`).className='ct-st st-e';$(`cst${i}`).textContent='✗ Failed';fail++;}
+    await delay(1200);
+  }
+  $('bulkStop').style.display='none';$('bulkBtn').style.display='flex';$('bulkBtn').disabled=true;$('bulkBtn').textContent='✓ Completed';
+  $('bulkSum').innerHTML=`<div class="saved-bar">✅ ${ok} emails opened · ${fail} failed${bulkStop_?' · Stopped':''}</div>`;
+}
+function stopBulk(){bulkStop_=true;}
+</script>
+</body>
+</html>
